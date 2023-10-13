@@ -16,6 +16,11 @@ SpriteSheetPropertyGroup = type(
                 description="Object to render with each animation",
                 type=bpy.types.Object
             ),
+            "cameraRoot": bpy.props.PointerProperty(
+                name="Camera Root",
+                description="Object to rotate for each camera angle",
+                type=bpy.types.Object
+            ),
             "tileSize": bpy.props.IntVectorProperty(
                 name="Tile Size",
                 description="Size of an individual sprite",

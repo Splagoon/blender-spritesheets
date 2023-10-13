@@ -12,6 +12,7 @@ ProgressPropertyGroup = type(
           "tileTotal": bpy.props.IntProperty(name="tileTotal"),
           "rendering": bpy.props.BoolProperty(name="rendering"),
           "success": bpy.props.BoolProperty(name="success"),
+          "angle": bpy.props.IntProperty(name="angle"),
         }
     },
 )

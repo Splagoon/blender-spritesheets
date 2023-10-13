@@ -25,6 +25,8 @@ class UI_PT_SpritePanel(bpy.types.Panel):
         row.prop_search(props, "target", bpy.data, "objects")
         row = layout.row()
         row.label(text="This target will have all Actions in the Scene applied to it when rendering animations")
+        row = layout.row()
+        row.prop_search(props, "cameraRoot", bpy.data, "objects")
 
         layout.separator()
 

@@ -19,8 +19,8 @@ from properties import SpriteSheetPropertyGroup
 importlib.reload(SpriteSheetPropertyGroup)
 
 bl_info = {
-    "name": "Blender Sprite Sheets",
-    "author": "Michael LaPlante, Tim Harding",
+    "name": "Blender Sprite Sheets (fork)",
+    "author": "Michael LaPlante, Tim Harding, Rob Kellett",
     "description": "A Blender plugin that allows you to export 3D models and animations to spritesheets",
     "blender": (2, 80, 0),
     "version": (0, 0, 1),
@@ -32,8 +32,8 @@ bl_info = {
 classes = (
     SpriteSheetPropertyGroup.SpriteSheetPropertyGroup,
     ProgressPropertyGroup.ProgressPropertyGroup,
-    renderTile.RenderTile, 
-    renderSpriteSheet.RenderSpriteSheet, 
+    renderTile.RenderTile,
+    renderSpriteSheet.RenderSpriteSheet,
     spritePanel.UI_PT_SpritePanel
 )
 
@@ -54,4 +54,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-  

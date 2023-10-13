@@ -2,6 +2,7 @@ import os
 import sys
 import bpy
 import math
+import mathutils
 import shutil
 import platform
 import subprocess
@@ -35,20 +36,27 @@ class RenderSpriteSheet(bpy.types.Operator):
         frame_end = 0
 
         objectToRender = props.target
-        for index, action in enumerate(bpy.data.actions):
-            progressProps.actionName = action.name
-            progressProps.actionIndex = index
-            objectToRender.animation_data.action = action
+        cameraRoot = props.cameraRoot
+        for angleIdx in range(8):
+            angle = angleIdx * 45
+            progressProps.angle = angle
+            cameraRoot.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(angle)), 'XYZ')
 
-            count, _, _ = frame_count(action.frame_range)
-            frame_end += count
-            animation_descs.append({
-                "name": action.name,
-                "end": frame_end,
-            })
+            for index, action in enumerate(bpy.data.actions):
+                progressProps.actionName = action.name
+                progressProps.actionIndex = index
+                objectToRender.animation_data.action = action
 
-            self.processAction(action, scene, props,
-                               progressProps, objectToRender)
+                count, _, _ = frame_count(action.frame_range)
+                frame_end += count
+                animation_descs.append({
+                    "angle": angle,
+                    "name": action.name,
+                    "end": frame_end,
+                })
+
+                self.processAction(action, scene, props,
+                                progressProps, objectToRender)
 
         assemblerPath = os.path.normpath(
             os.path.join(
