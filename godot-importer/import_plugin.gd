@@ -1,102 +1,101 @@
-
-tool
+@tool
 extends EditorImportPlugin
 
 
-func get_importer_name():
-    return "godot-bss-importer"
+func _get_importer_name():
+	return "godot-bss-importer"
 
 
-func get_visible_name():
-    return "Scene"
+func _get_visible_name():
+	return "SpriteFrames"
 
 
-func get_recognized_extensions():
-    return ["bss"]
+func _get_recognized_extensions():
+	return ["bss"]
 
 
-func get_save_extension():
-    return "tscn"
+func _get_save_extension():
+	return "tres"
 
 
-func get_resource_type():
-    return "PackedScene"
+func _get_resource_type():
+	return "SpriteFrames"
 
 
-func get_preset_count():
-    return 0
+func _get_preset_count():
+	return 1
 
 
-func get_import_options(preset):
-    return [
-        {name="sheet_image", default_value="", property_hint=PROPERTY_HINT_FILE, hint_string="*.png", tooltip="Absolute path to the spritesheet .png."},
-    ]
+func _get_preset_name(preset):
+	return "Default"
 
 
-func get_option_visibility(option, options):
-    return true
+func _get_import_options(_path, preset):
+	return [
+		{
+			"name": "sheet_image",
+			"default_value": "",
+			"property_hint": PROPERTY_HINT_FILE,
+			"hint_string": "*.png",
+			"tooltip": "Absolute path to the spritesheet .png."
+		},
+	]
 
 
-func import(source_file, save_path, options, platform_variants, gen_files):
-    var file := File.new()
-    var err := file.open(source_file, File.READ)
-    if err != OK:
-        printerr("Failed to open file: ", err)
-        return FAILED
+func _get_option_visibility(_path, _option, _options):
+	return true
 
-    var content = file.get_as_text()
-    var data = parse_json(content)
-    file.close()
 
-    var framerate = data["frameRate"]
-    var time_offset = 1 / framerate
+func _get_priority():
+	return 1.0
 
-    var texture = load(options["sheet_image"])
-    if not texture:
-        return FAILED
 
-    var packed_scene = PackedScene.new()
-    var scene = Node2D.new()
+func _get_import_order():
+	# After textures (0) but before scenes (100)
+	return 50
 
-    var sprite = Sprite.new()
-    scene.add_child(sprite, true)
-    sprite.set_owner(scene)
 
-    sprite.set_texture(texture)
-    sprite.set_hframes(texture.get_width() / data["tileWidth"])
-    sprite.set_vframes(texture.get_height() / data["tileHeight"])
-    
-    var player = AnimationPlayer.new()
-    scene.add_child(player, true)
-    player.set_owner(scene)
-    
-    var count = 0
-    for anim_data in data["animations"]:
-        var animation = Animation.new()
-        var track_index = animation.add_track(Animation.TYPE_VALUE)
-        animation.track_set_path(track_index, "./Sprite:frame")
+func _import(source_file, save_path, options, platform_variants, gen_files):
+	var file := FileAccess.open(source_file, FileAccess.READ)
+	if file == null:
+		printerr("Failed to open file: ", FileAccess.get_open_error())
+		return FileAccess.get_open_error()
 
-        var time = 0.0
-        for i in range(count, anim_data["end"]):
-            animation.track_insert_key(track_index, time, i)
-            time += time_offset
-    
-            player.add_animation(anim_data["name"], animation)
+	var content = file.get_as_text()
+	var data = JSON.parse_string(content)
+	file.close()
 
-        animation.set_length(time)
-        count += anim_data["end"]
-        
-    err = packed_scene.pack(scene)
-    if err != OK:
-        printerr("Failed to pack scene: ", err)
-        return FAILED
+	var texture = load(options["sheet_image"])
+	if not texture:
+		return OK
 
-    scene.call_deferred('free')
+	var x_tiles = int(texture.get_width() / data["tileWidth"])
+	var sprite_frames = SpriteFrames.new()
 
-    var filename = save_path + "." + get_save_extension()
-    err = ResourceSaver.save(filename, packed_scene)
-    if err != OK:
-        printerr("Failed to save resource: ", err)
-        return FAILED
-    
-    return OK
+	var count = 0
+	for anim_data in data["animations"]:
+		var anim_name = "%s_%d" % [anim_data["name"], anim_data["angle"]]
+		sprite_frames.add_animation(anim_name)
+		sprite_frames.set_animation_speed(anim_name, data["frameRate"])
+
+		for duration in anim_data["frame_durations"]:
+			var atlas_texture = AtlasTexture.new()
+			var x = count % x_tiles
+			var y = count / x_tiles
+			print_debug("tile: (%d, %d)" % [x, y])
+			atlas_texture.atlas = texture
+			atlas_texture.region = Rect2(
+				x * data["tileWidth"], y * data["tileHeight"], data["tileWidth"], data["tileHeight"]
+			)
+			sprite_frames.add_frame(anim_name, atlas_texture, duration)
+			count += 1
+
+		# count = anim_data["end"]
+
+	var filename = save_path + "." + _get_save_extension()
+	var err = ResourceSaver.save(sprite_frames, filename)
+	if err != OK:
+		printerr("Failed to save resource: ", err)
+		return err
+
+	return OK

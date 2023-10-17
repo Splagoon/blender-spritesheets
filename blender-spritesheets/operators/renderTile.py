@@ -29,7 +29,7 @@ class RenderTile(bpy.types.Operator):
         scene.render.resolution_x = props.tileSize[0]
         scene.render.resolution_y = props.tileSize[1]
         scene.render.filepath = os.path.join(
-            props.outputPath, "temp/") + progressProps.actionName + index_to_string(progressProps.tileIndex, progressProps.tileTotal) + "_" + str(progressProps.angle)
+            props.outputPath, "temp/") + index_to_string(progressProps.angle, 360) + "_" + progressProps.actionName + "_" + index_to_string(progressProps.tileIndex, progressProps.tileTotal)
         bpy.context.scene.eevee.taa_render_samples = 1
         bpy.ops.render.render(write_still=1)
         return {'FINISHED'}
